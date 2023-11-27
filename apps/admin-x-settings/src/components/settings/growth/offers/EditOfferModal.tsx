@@ -31,6 +31,15 @@ const Sidebar: React.FC<{
             const handleError = useHandleError();
             const {mutateAsync: editOffer} = useEditOffer();
 
+            const [nameLength, setNameLength] = useState(offer?.name.length || 0);
+            const nameLengthColor = nameLength > 40 ? 'text-red' : 'text-green';
+
+            useEffect(() => {
+                if (offer?.name) {
+                    setNameLength(offer?.name.length);
+                }
+            }, [offer?.name]);
+
             const offerUrl = `${getHomepageUrl(siteData!)}${offer?.code}`;
             const handleCopyClick = async () => {
                 try {
@@ -122,12 +131,16 @@ const Sidebar: React.FC<{
                             <div className='flex flex-col gap-6'>
                                 <TextField
                                     error={Boolean(errors.name)}
-                                    hint={errors.name || 'Visible to members on Stripe Checkout page'}
+                                    hint={errors.name || <div className='flex justify-between'><span>Visible to members on Stripe Checkout page</span><strong><span className={`${nameLengthColor}`}>{nameLength}</span> / 40</strong></div>}
+                                    maxLength={40}
                                     placeholder='Black Friday'
                                     title='Name'
                                     value={offer?.name}
                                     onBlur={validate}
-                                    onChange={e => updateOffer({name: e.target.value})}
+                                    onChange={(e) => {
+                                        setNameLength(e.target.value.length);
+                                        updateOffer({name: e.target.value});
+                                    }}
                                     onKeyDown={() => clearError('name')}
                                 />
                                 <div className='flex flex-col gap-1.5'>
@@ -237,23 +250,17 @@ const EditOfferModal: React.FC<{id: string}> = ({id}) => {
     useEffect(() => {
         const dataset : offerPortalPreviewUrlTypes = {
             name: formState?.name || '',
-            code: {
-                value: formState?.code || ''
-            },
-            displayTitle: {
-                value: formState?.display_title || ''
-            },
+            code: formState?.code || '',
+            displayTitle: formState?.display_title || '',
             displayDescription: formState?.display_description || '',
             type: formState?.type || '',
             cadence: formState?.cadence || '',
-            trialAmount: formState?.amount,
-            discountAmount: formState?.amount,
+            amount: formState?.amount,
             duration: formState?.duration || '',
             durationInMonths: formState?.duration_in_months || 0,
             currency: formState?.currency || '',
             status: formState?.status || '',
-            tierId: formState?.tier.id || '',
-            amountType: formState?.type === 'percent' ? 'percent' : 'amount'
+            tierId: formState?.tier.id || ''
         };
 
         const newHref = getOfferPortalPreviewUrl(dataset, siteData.url);
@@ -265,6 +272,9 @@ const EditOfferModal: React.FC<{id: string}> = ({id}) => {
     />;
 
     return offerById ? <PreviewModalContent
+        afterClose={() => {
+            updateRoute('offers');
+        }}
         deviceSelector={false}
         dirty={saveState === 'unsaved'}
         height='full'

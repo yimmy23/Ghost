@@ -1,7 +1,7 @@
 import useFeatureFlag from '../../../../hooks/useFeatureFlag';
 import {Button, Tab, TabView} from '@tryghost/admin-x-design-system';
-import {Icon} from '@tryghost/admin-x-design-system';
 import {Modal} from '@tryghost/admin-x-design-system';
+import {NoValueLabel} from '@tryghost/admin-x-design-system';
 import {SortMenu} from '@tryghost/admin-x-design-system';
 import {Tier, useBrowseTiers} from '@tryghost/admin-x-framework/api/tiers';
 import {Tooltip} from '@tryghost/admin-x-design-system';
@@ -34,7 +34,10 @@ export const getOfferDiscount = (type: string, amount: number, cadence: string, 
     let discountOffer = '';
     const originalPrice = cadence === 'month' ? tier?.monthly_price ?? 0 : tier?.yearly_price ?? 0;
     let updatedPrice = originalPrice;
-    let originalPriceWithCurrency = getSymbol(currency) + numberWithCommas(currencyToDecimal(originalPrice));
+
+    const formatToTwoDecimals = (num: number): number => parseFloat(num.toFixed(2));
+
+    let originalPriceWithCurrency = getSymbol(currency) + numberWithCommas(formatToTwoDecimals(currencyToDecimal(originalPrice)));
 
     switch (type) {
     case 'percent':
@@ -44,7 +47,7 @@ export const getOfferDiscount = (type: string, amount: number, cadence: string, 
         break;
     case 'fixed':
         discountColor = 'text-blue';
-        discountOffer = numberWithCommas(currencyToDecimal(amount)) + ' ' + currency + ' off';
+        discountOffer = numberWithCommas(formatToTwoDecimals(currencyToDecimal(amount))) + ' ' + currency + ' off';
         updatedPrice = originalPrice - amount;
         break;
     case 'trial':
@@ -56,7 +59,7 @@ export const getOfferDiscount = (type: string, amount: number, cadence: string, 
         break;
     };
 
-    const updatedPriceWithCurrency = getSymbol(currency) + numberWithCommas(currencyToDecimal(updatedPrice));
+    const updatedPriceWithCurrency = getSymbol(currency) + numberWithCommas(formatToTwoDecimals(currencyToDecimal(updatedPrice)));
 
     return {
         discountColor,
@@ -106,21 +109,6 @@ const OfferCard: React.FC<{amount: number, cadence: string, currency: string, du
             </div>
         </div>
     );
-};
-
-const EmptyScreen: React.FC = () => {
-    const {updateRoute} = useRouting();
-
-    return <div className='flex h-full flex-col items-center justify-center text-center'>
-        <Icon colorClass='text-grey-700' name='ai-tagging-spark' size='xl' />
-        <h1 className='mt-6 text-4xl'>Provide offers to new signups</h1>
-        <div className='max-w-[420px]'>
-            <p className='mt-3 text-[1.6rem]'>Boost your subscriptions by creating targeted discounts to potential members.</p>
-            <div className='mt-8'>
-                <Button color='green' label='Create first offer' fullWidth onClick={() => updateRoute('offers/new')} />
-            </div>
-        </div>
-    </div>;
 };
 
 export const OffersIndexModal = () => {
@@ -180,7 +168,7 @@ export const OffersIndexModal = () => {
             }
         });
 
-    const cardLayoutOutput = <div className='mt-8 grid grid-cols-3 gap-6'>
+    const cardLayoutOutput = <div className='mt-8 grid grid-cols-1 gap-6 min-[600px]:grid-cols-2 min-[900px]:grid-cols-3'>
         {sortedOffers.filter((offer) => {
             const offerTier = allTiers?.find(tier => tier.id === offer?.tier.id);
             //Check to filter out offers with archived offerTier
@@ -212,43 +200,48 @@ export const OffersIndexModal = () => {
         })}
     </div>;
 
-    const listLayoutOutput = <table className='m-0 w-full'>
-        <tr className='border-b border-b-grey-300'>
-            <th className='px-5 py-2.5 pl-0 text-xs font-normal text-grey-700'>{sortedOffers.length} {sortedOffers.length > 1 ? 'offers' : 'offer'}</th>
-            <th className='px-5 py-2.5 text-xs font-normal text-grey-700'>Tier</th>
-            <th className='px-5 py-2.5 text-xs font-normal text-grey-700'>Terms</th>
-            <th className='px-5 py-2.5 text-xs font-normal text-grey-700'>Price</th>
-            <th className='px-5 py-2.5 text-xs font-normal text-grey-700'>Redemptions</th>
-            <th className='min-w-[80px] px-5 py-2.5 pr-0 text-xs font-normal text-grey-700'></th>
-        </tr>
-        {sortedOffers.filter((offer) => {
-            const offerTier = allTiers?.find(tier => tier.id === offer?.tier.id);
-            //Check to filter out offers with archived offerTier
-            return (selectedTab === 'active' && (offer.status === 'active' && offerTier && offerTier.active === true)) ||
-            (selectedTab === 'archived' && (offer.status === 'archived' || (offerTier && offerTier.active === false)));
-        }).map((offer) => {
-            const offerTier = allTiers?.find(tier => tier.id === offer?.tier.id);
-
-            if (!offerTier) {
-                return null;
+    const listLayoutOutput = <div className='overflow-x-auto'>
+        <table className='m-0 w-full'>
+            {(selectedTab === 'active' && activeOffers.length > 0) || (selectedTab === 'archived' && archivedOffers.length > 0) ?
+                <tr className='border-b border-b-grey-300'>
+                    <th className='px-5 py-2.5 pl-0 text-xs font-normal text-grey-700'>{sortedOffers.length} {sortedOffers.length > 1 ? 'offers' : 'offer'}</th>
+                    <th className='px-5 py-2.5 text-xs font-normal text-grey-700'>Tier</th>
+                    <th className='px-5 py-2.5 text-xs font-normal text-grey-700'>Terms</th>
+                    <th className='px-5 py-2.5 text-xs font-normal text-grey-700'>Price</th>
+                    <th className='px-5 py-2.5 text-xs font-normal text-grey-700'>Redemptions</th>
+                    <th className='min-w-[80px] px-5 py-2.5 pr-0 text-xs font-normal text-grey-700'></th>
+                </tr> :
+                null
             }
+            {sortedOffers.filter((offer) => {
+                const offerTier = allTiers?.find(tier => tier.id === offer?.tier.id);
+                //Check to filter out offers with archived offerTier
+                return (selectedTab === 'active' && (offer.status === 'active' && offerTier && offerTier.active === true)) ||
+                (selectedTab === 'archived' && (offer.status === 'archived' || (offerTier && offerTier.active === false)));
+            }).map((offer) => {
+                const offerTier = allTiers?.find(tier => tier.id === offer?.tier.id);
 
-            const isTierArchived = offerTier?.active === false;
+                if (!offerTier) {
+                    return null;
+                }
 
-            const {discountColor, discountOffer, originalPriceWithCurrency, updatedPriceWithCurrency} = getOfferDiscount(offer.type, offer.amount, offer.cadence, offer.currency || 'USD', offerTier);
+                const isTierArchived = offerTier?.active === false;
 
-            return (
-                <tr className={`group ${isTierArchived ? 'opacity-50' : ''} ${isTierArchived ? 'pointer-events-none' : ''} border-b border-b-grey-200`}>
-                    <td className='p-0 font-semibold'><a className='block cursor-pointer p-5 pl-0' onClick={() => handleOfferEdit(offer?.id ? offer.id : '')}>{offer?.name}</a></td>
-                    <td className='p-0 text-sm'><a className='block cursor-pointer p-5' onClick={() => handleOfferEdit(offer?.id ? offer.id : '')}>{offerTier.name} {getOfferCadence(offer.cadence)}</a></td>
-                    <td className='p-0 text-sm'><a className='block cursor-pointer p-5' onClick={() => handleOfferEdit(offer?.id ? offer.id : '')}><span className={`font-semibold uppercase ${discountColor}`}>{discountOffer}</span> — {getOfferDuration(offer.duration)}</a></td>
-                    <td className='p-0 text-sm'><a className='block cursor-pointer p-5' onClick={() => handleOfferEdit(offer?.id ? offer.id : '')}>{updatedPriceWithCurrency} <span className='text-grey-700 line-through'>{originalPriceWithCurrency}</span></a></td>
-                    <td className='p-0 text-sm'><a className='block cursor-pointer p-5 hover:underline' href={createRedemptionFilterUrl(offer.id ? offer.id : '')}>{offer.redemption_count}</a></td>
-                    <td className='min-w-[80px] p-5 pr-0 text-right text-sm leading-none'><CopyLinkButton offerCode={offer.code} /></td>
-                </tr>
-            );
-        })}
-    </table>;
+                const {discountColor, discountOffer, originalPriceWithCurrency, updatedPriceWithCurrency} = getOfferDiscount(offer.type, offer.amount, offer.cadence, offer.currency || 'USD', offerTier);
+
+                return (
+                    <tr className={`group ${isTierArchived ? 'opacity-50' : ''} ${isTierArchived ? 'pointer-events-none' : ''} border-b border-b-grey-200`}>
+                        <td className='min-w-[200px] p-0 font-semibold'><a className='block cursor-pointer p-5 pl-0' onClick={() => handleOfferEdit(offer?.id ? offer.id : '')}>{offer?.name}</a></td>
+                        <td className='whitespace-nowrap p-0 text-sm'><a className='block cursor-pointer p-5' onClick={() => handleOfferEdit(offer?.id ? offer.id : '')}>{offerTier.name} {getOfferCadence(offer.cadence)}</a></td>
+                        <td className='whitespace-nowrap p-0 text-sm'><a className='block cursor-pointer p-5' onClick={() => handleOfferEdit(offer?.id ? offer.id : '')}><span className={`font-semibold uppercase ${discountColor}`}>{discountOffer}</span> — {getOfferDuration(offer.duration)}</a></td>
+                        <td className='whitespace-nowrap p-0 text-sm'><a className='block cursor-pointer p-5' onClick={() => handleOfferEdit(offer?.id ? offer.id : '')}>{updatedPriceWithCurrency} <span className='text-grey-700 line-through'>{originalPriceWithCurrency}</span></a></td>
+                        <td className='whitespace-nowrap p-0 text-sm'><a className='block cursor-pointer p-5 hover:underline' href={createRedemptionFilterUrl(offer.id ? offer.id : '')}>{offer.redemption_count}</a></td>
+                        <td className='min-w-[80px] whitespace-nowrap p-5 pr-0 text-right text-sm leading-none'><CopyLinkButton offerCode={offer.code} /></td>
+                    </tr>
+                );
+            })}
+        </table>
+    </div>;
 
     return <Modal
         afterClose={() => {
@@ -257,15 +250,13 @@ export const OffersIndexModal = () => {
         animate={false}
         cancelLabel=''
         footer={
-            (activeOffers.length > 0 || archivedOffers.length > 0) ?
-                <div className='mx-8 flex w-full items-center justify-between'>
-                    <a className='text-sm' href="https://ghost.org/help/offers" rel="noopener noreferrer" target="_blank">→ Learn about offers in Ghost</a>
-                    <Button color='black' label='Close' onClick={() => {
-                        modal.remove();
-                        updateRoute('offers');
-                    }} />
-                </div> :
-                false
+            <div className='mx-8 flex w-full items-center justify-between'>
+                <a className='text-sm' href="https://ghost.org/help/offers" rel="noopener noreferrer" target="_blank">→ Learn about offers in Ghost</a>
+                <Button color='black' label='Close' onClick={() => {
+                    modal.remove();
+                    updateRoute('offers');
+                }} />
+            </div>
         }
         header={false}
         height='full'
@@ -273,53 +264,59 @@ export const OffersIndexModal = () => {
         testId='offers-modal'
         stickyFooter
     >
-        {(activeOffers.length > 0 || archivedOffers.length > 0) ?
-            <div className='pt-6'>
-                <header>
-                    <div className='flex items-center justify-between'>
-                        <div>
-                            {activeOffers.length > 0 && archivedOffers.length > 0 ?
-                                <TabView
-                                    border={false}
-                                    selectedTab={selectedTab}
-                                    tabs={offersTabs}
-                                    width='wide'
-                                    onTabChange={setSelectedTab}
-                                /> :
-                                null
-                            }
-                        </div>
-                        <Button color='green' icon='add' iconColorClass='green' label='New offer' link={true} size='sm' onClick={() => updateRoute('offers/new')} />
+        <div className='pt-6'>
+            <header>
+                <div className='flex items-center justify-between'>
+                    <div>
+                        <TabView
+                            border={false}
+                            selectedTab={selectedTab}
+                            tabs={offersTabs}
+                            width='wide'
+                            onTabChange={setSelectedTab}
+                        />
                     </div>
-                    <div className='mt-12 flex items-center justify-between border-b border-b-grey-300 pb-2.5'>
-                        <h1 className='text-3xl'>{offersTabs.find(tab => tab.id === selectedTab)?.title} offers</h1>
+                    <Button color='green' icon='add' iconColorClass='green' label='New offer' link={true} size='sm' onClick={() => updateRoute('offers/new')} />
+                </div>
+                <div className='mt-12 flex items-center justify-between border-b border-b-grey-300 pb-2.5'>
+                    <h1 className='text-3xl'>{offersTabs.find(tab => tab.id === selectedTab)?.title} offers</h1>
+                    <div className='flex gap-3'>
+                        <SortMenu
+                            direction='desc'
+                            items={[
+                                {id: 'date-added', label: 'Date added', selected: sortOption === 'date-added'},
+                                {id: 'name', label: 'Name', selected: sortOption === 'name'},
+                                {id: 'redemptions', label: 'Redemptions', selected: sortOption === 'redemptions'}
+                            ]}
+                            position='right'
+                            onDirectionChange={(selectedDirection) => {
+                                const newDirection = selectedDirection === 'asc' ? 'desc' : 'asc';
+                                setSortDirection(newDirection);
+                            }}
+                            onSortChange={(selectedOption) => {
+                                setSortOption(selectedOption);
+                            }}
+                        />
                         <div className='flex gap-3'>
-                            <SortMenu
-                                direction='desc'
-                                items={[
-                                    {id: 'date-added', label: 'Date added', selected: sortOption === 'date-added'},
-                                    {id: 'name', label: 'Name', selected: sortOption === 'name'},
-                                    {id: 'redemptions', label: 'Redemptions', selected: sortOption === 'redemptions'}
-                                ]}
-                                position='right'
-                                onDirectionChange={(selectedDirection) => {
-                                    const newDirection = selectedDirection === 'asc' ? 'desc' : 'asc';
-                                    setSortDirection(newDirection);
-                                }}
-                                onSortChange={(selectedOption) => {
-                                    setSortOption(selectedOption);
-                                }}
-                            />
-                            <div className='flex gap-3'>
-                                <Button icon='layout-module-1' iconColorClass={selectedLayout === 'card' ? 'text-black' : 'text-grey-500'} link={true} size='sm' onClick={() => setSelectedLayout('card')} />
-                                <Button icon='layout-headline' iconColorClass={selectedLayout === 'list' ? 'text-black' : 'text-grey-500'} link={true} size='sm' onClick={() => setSelectedLayout('list')} />
-                            </div>
+                            <Button icon='layout-module-1' iconColorClass={selectedLayout === 'card' ? 'text-black' : 'text-grey-500'} link={true} size='sm' onClick={() => setSelectedLayout('card')} />
+                            <Button icon='layout-headline' iconColorClass={selectedLayout === 'list' ? 'text-black' : 'text-grey-500'} link={true} size='sm' onClick={() => setSelectedLayout('list')} />
                         </div>
                     </div>
-                </header>
-                {selectedLayout === 'card' ? cardLayoutOutput : listLayoutOutput}
-            </div> :
-            <EmptyScreen />
-        }
+                </div>
+            </header>
+            {selectedTab === 'active' && activeOffers.length === 0 ?
+                <NoValueLabel icon='tags-block'>
+                    No offers found.
+                </NoValueLabel> :
+                null
+            }
+            {selectedTab === 'archived' && archivedOffers.length === 0 ?
+                <NoValueLabel icon='tags-block'>
+                    No offers found.
+                </NoValueLabel> :
+                null
+            }
+            {selectedLayout === 'card' ? cardLayoutOutput : listLayoutOutput}
+        </div>
     </Modal>;
 };
