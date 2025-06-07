@@ -5,6 +5,7 @@ import StatsHeader from './layout/StatsHeader';
 import StatsLayout from './layout/StatsLayout';
 import StatsView from './layout/StatsView';
 import {Card, CardContent, CardDescription, CardHeader, CardTitle, GhAreaChart, GhAreaChartDataItem, KpiCardHeader, KpiCardHeaderLabel, KpiCardHeaderValue, LucideIcon, Separator, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, centsToDollars, cn, formatDisplayDate, formatNumber, formatQueryDate, getRangeDates, sanitizeChartData} from '@tryghost/shade';
+import {STATS_RANGES} from '@src/utils/constants';
 import {getAudienceQueryParam} from './components/AudienceSelect';
 import {getPeriodText} from '@src/utils/chart-helpers';
 import {getStatEndpointUrl, getToken, useNavigate} from '@tryghost/admin-x-framework';
@@ -17,7 +18,7 @@ import {useTopPostsViews} from '@src/hooks/useTopPostsViews';
 interface OverviewKPICardProps {
     linkto: string;
     title: string;
-    iconName: keyof typeof LucideIcon;
+    iconName?: keyof typeof LucideIcon;
     description: string;
     diffDirection?: 'up' | 'down' | 'same' | 'empty';
     diffValue?: string;
@@ -32,7 +33,7 @@ const OverviewKPICard: React.FC<OverviewKPICardProps> = ({
     title,
     iconName,
     description,
-    // color,
+    color,
     diffDirection,
     diffValue,
     formattedValue,
@@ -40,7 +41,8 @@ const OverviewKPICard: React.FC<OverviewKPICardProps> = ({
     onClick
 }) => {
     // const navigate = useNavigate();
-    const IconComponent = LucideIcon[iconName] as LucideIcon.LucideIcon;
+    const {range} = useGlobalData();
+    const IconComponent = iconName && LucideIcon[iconName] as LucideIcon.LucideIcon;
 
     return (
         <Card className={onClick && 'group transition-all hover:!cursor-pointer hover:bg-accent/50'} onClick={onClick}>
@@ -50,11 +52,12 @@ const OverviewKPICard: React.FC<OverviewKPICardProps> = ({
             </CardHeader>
             <KpiCardHeader className='grow gap-2 border-none pb-2'>
                 <KpiCardHeaderLabel className={onClick && 'transition-all group-hover:text-foreground'}>
+                    {color && <span className='inline-block size-2 rounded-full opacity-50' style={{backgroundColor: color}}></span>}
                     {IconComponent && <IconComponent size={16} strokeWidth={1.5} />}
                     {title}
                 </KpiCardHeaderLabel>
                 <KpiCardHeaderValue
-                    diffDirection={diffDirection}
+                    diffDirection={range === STATS_RANGES.allTime.value ? 'hidden' : diffDirection}
                     diffValue={diffValue}
                     value={formattedValue}
                 />
@@ -235,14 +238,14 @@ const Overview: React.FC = () => {
             <StatsView isLoading={isLoading}>
                 <div className='grid grid-cols-3 gap-8'>
                     <OverviewKPICard
+                        color='hsl(var(--chart-blue))'
                         description='Number of individual people who visited your website'
                         diffDirection='empty'
                         formattedValue={kpiValues.visits}
-                        iconName='MousePointer'
                         linkto='/web/'
                         title='Unique visitors'
                         onClick={() => {
-                            navigate('/');
+                            navigate('/web/');
                         }}
                     >
                         <GhAreaChart
@@ -251,6 +254,7 @@ const Overview: React.FC = () => {
                             data={visitorsChartData}
                             id="visitors"
                             range={range}
+                            showHorizontalLines={false}
                             showYAxisValues={false}
                             syncId="overview-charts"
                             yAxisRange={visitorsYRange}
@@ -258,11 +262,11 @@ const Overview: React.FC = () => {
                     </OverviewKPICard>
 
                     <OverviewKPICard
+                        color='hsl(var(--chart-teal))'
                         description='How number of members of your publication changed over time'
                         diffDirection={growthTotals.directions.total}
                         diffValue={growthTotals.percentChanges.total}
                         formattedValue={formatNumber(growthTotals.totalMembers)}
-                        iconName='User'
                         linkto='/growth/'
                         title='Members'
                         onClick={() => {
@@ -271,21 +275,22 @@ const Overview: React.FC = () => {
                     >
                         <GhAreaChart
                             className={areaChartClassName}
-                            color='hsl(var(--chart-green))'
+                            color='hsl(var(--chart-teal))'
                             data={membersChartData}
                             id="members"
                             range={range}
+                            showHorizontalLines={false}
                             showYAxisValues={false}
                             syncId="overview-charts"
                         />
                     </OverviewKPICard>
 
                     <OverviewKPICard
+                        color='hsl(var(--chart-purple))'
                         description='Monthly recurring revenue changes over time'
                         diffDirection={growthTotals.directions.mrr}
                         diffValue={growthTotals.percentChanges.mrr}
                         formattedValue={`$${formatNumber(centsToDollars(growthTotals.mrr))}`}
-                        iconName='DollarSign'
                         linkto='/growth/'
                         title='MRR'
                         onClick={() => {
@@ -294,10 +299,11 @@ const Overview: React.FC = () => {
                     >
                         <GhAreaChart
                             className={areaChartClassName}
-                            color='hsl(var(--chart-orange))'
+                            color='hsl(var(--chart-purple))'
                             data={mrrChartData}
                             id="mrr"
                             range={range}
+                            showHorizontalLines={false}
                             showYAxisValues={false}
                             syncId="overview-charts"
                         />

@@ -23,7 +23,7 @@ export const KPI_METRICS: Record<string, KpiMetric> = {
     views: {
         dataKey: 'pageviews',
         label: 'Pageviews',
-        color: 'hsl(var(--chart-green))',
+        color: 'hsl(var(--chart-teal))',
         formatter: formatNumber
     },
     'bounce-rate': {

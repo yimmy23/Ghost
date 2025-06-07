@@ -192,11 +192,14 @@ interface FeedItemProps {
     type: string;
     commentCount?: number;
     repostCount?: number;
+    likeCount?: number;
     showHeader?: boolean;
     last?: boolean;
     isLoading?: boolean;
     isPending?: boolean;
     isCompact?: boolean;
+    isChainContinuation?: boolean;
+    isChainParent?: boolean;
     onClick?: () => void;
     onDelete?: () => void;
     showStats?: boolean;
@@ -215,11 +218,14 @@ const FeedItem: React.FC<FeedItemProps> = ({
     type,
     commentCount = 0,
     repostCount = 0,
+    likeCount = 0,
     showHeader = true,
     last,
     isLoading,
     isPending = false,
     isCompact = false,
+    isChainContinuation = false,
+    isChainParent = false,
     onClick: onClickHandler = noop,
     onDelete = noop,
     showStats = true
@@ -406,7 +412,7 @@ const FeedItem: React.FC<FeedItemProps> = ({
                                                 commentCount={commentCount}
                                                 disabled={isPending}
                                                 layout={layout}
-                                                likeCount={1}
+                                                likeCount={likeCount}
                                                 object={object}
                                                 repostCount={repostCount}
                                                 onLikeClick={onLikeClick}
@@ -469,7 +475,7 @@ const FeedItem: React.FC<FeedItemProps> = ({
                                                 actor={author}
                                                 commentCount={commentCount}
                                                 layout={layout}
-                                                likeCount={1}
+                                                likeCount={likeCount}
                                                 object={object}
                                                 repostCount={repostCount}
                                                 onLikeClick={onLikeClick}
@@ -497,7 +503,7 @@ const FeedItem: React.FC<FeedItemProps> = ({
         return (
             <>
                 {object && (
-                    <div className={`group/article relative ${isCompact ? 'pb-6' : 'py-5'} ${!isPending ? 'cursor-pointer' : 'pointer-events-none'}`} data-layout='reply' data-object-id={object.id} onClick={onClick}>
+                    <div className={`group/article relative ${isCompact ? 'pb-6' : isChainContinuation ? 'pb-5' : 'py-5'} ${!isPending ? 'cursor-pointer' : 'pointer-events-none'}`} data-layout='reply' data-object-id={object.id} onClick={onClick}>
                         <div className={`border-1 z-10 flex items-start gap-3 border-b-gray-200`} data-test-activity>
                             <div className='relative z-10 pt-[3px]'>
                                 <APAvatar author={author} disabled={isPending} />
@@ -543,7 +549,7 @@ const FeedItem: React.FC<FeedItemProps> = ({
                                                 commentCount={commentCount}
                                                 disabled={isPending}
                                                 layout={layout}
-                                                likeCount={1}
+                                                likeCount={likeCount}
                                                 object={object}
                                                 repostCount={repostCount}
                                                 onLikeClick={onLikeClick}
@@ -554,7 +560,7 @@ const FeedItem: React.FC<FeedItemProps> = ({
                             </div>
                         </div>
                         <div className={`absolute -inset-x-3 -inset-y-0 z-0 rounded transition-colors`}></div>
-                        {!last && <div className={`absolute left-[19px] ${isCompact ? 'bottom-[8px] top-[51px]' : 'bottom-[-7px] top-[71px]'} z-0 w-[2px] rounded-sm bg-gray-200`}></div>}
+                        {!last && <div className={`absolute left-[19px] ${isCompact ? 'bottom-[8px] top-[51px]' : isChainContinuation ? 'bottom-[5px] top-[51px]' : isChainParent ? 'bottom-[5px] top-[71px]' : 'bottom-[-7px] top-[71px]'} z-0 w-[2px] rounded-sm bg-gray-200`}></div>}
                     </div>
                 )}
                 <ImageLightbox
@@ -619,7 +625,7 @@ const FeedItem: React.FC<FeedItemProps> = ({
                                         actor={author}
                                         commentCount={commentCount}
                                         layout={layout}
-                                        likeCount={1}
+                                        likeCount={likeCount}
                                         object={object}
                                         repostCount={repostCount}
                                         onLikeClick={onLikeClick}

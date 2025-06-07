@@ -9,7 +9,7 @@ const NewsletterOverview:React.FC = () => {
     const {stats, topLinks, isLoading: isNewsletterStatsLoading} = usePostNewsletterStats(postId || '');
 
     const opensChartData = [
-        {opens: stats.opened, openrate: stats.openedRate, fill: 'var(--color-openrate)'}
+        {opens: stats.opened, openrate: stats.openedRate, fill: 'url(#gradientBlue)'}
     ];
     const opensChartConfig = {
         openrate: {
@@ -19,12 +19,12 @@ const NewsletterOverview:React.FC = () => {
     } satisfies ChartConfig;
 
     const clicksChartData = [
-        {clicks: stats.clicked, clickrate: stats.clickedRate, fill: 'var(--color-clickrate)'}
+        {clicks: stats.clicked, clickrate: stats.clickedRate, fill: 'url(#gradientTeal)'}
     ];
     const clickschartConfig = {
         clickrate: {
             label: 'Clicks',
-            color: 'hsl(var(--chart-green))'
+            color: 'hsl(var(--chart-teal))'
         }
     } satisfies ChartConfig;
 
@@ -67,6 +67,12 @@ const NewsletterOverview:React.FC = () => {
                                         outerRadius={110}
                                         startAngle={90}
                                     >
+                                        <defs>
+                                            <radialGradient cx="30%" cy="30%" id="gradientBlue" r="70%">
+                                                <stop offset="0%" stopColor="hsl(var(--chart-blue))" stopOpacity={0.5} />
+                                                <stop offset="100%" stopColor="hsl(var(--chart-blue))" stopOpacity={1} />
+                                            </radialGradient>
+                                        </defs>
                                         <Recharts.RadialBar
                                             cornerRadius={10}
                                             dataKey="openrate"
@@ -94,14 +100,14 @@ const NewsletterOverview:React.FC = () => {
                                                                     x={viewBox.cx}
                                                                     y={(viewBox.cy || 0) - 4}
                                                                 >
-                                                                    {formatNumber(opensChartData[0].opens)}
+                                                                    {formatPercentage(opensChartData[0].openrate)}
                                                                 </tspan>
                                                                 <tspan
                                                                     className="text-base font-medium"
                                                                     x={viewBox.cx}
                                                                     y={(viewBox.cy || 0) + 18}
                                                                 >
-                                                                    {formatPercentage(opensChartData[0].openrate)}
+                                                                    {formatNumber(opensChartData[0].opens)}
                                                                 </tspan>
                                                             </text>
                                                         );
@@ -131,6 +137,12 @@ const NewsletterOverview:React.FC = () => {
                                         outerRadius={110}
                                         startAngle={90}
                                     >
+                                        <defs>
+                                            <radialGradient cx="30%" cy="30%" id="gradientTeal" r="70%">
+                                                <stop offset="0%" stopColor="hsl(var(--chart-teal))" stopOpacity={0.5} />
+                                                <stop offset="100%" stopColor="hsl(var(--chart-teal))" stopOpacity={1} />
+                                            </radialGradient>
+                                        </defs>
                                         <Recharts.RadialBar
                                             cornerRadius={10}
                                             dataKey="clickrate"
@@ -159,14 +171,14 @@ const NewsletterOverview:React.FC = () => {
                                                                     x={viewBox.cx}
                                                                     y={(viewBox.cy || 0) - 4}
                                                                 >
-                                                                    {formatNumber(clicksChartData[0].clicks)}
+                                                                    {formatPercentage(clicksChartData[0].clickrate)}
                                                                 </tspan>
                                                                 <tspan
                                                                     className="text-base font-medium"
                                                                     x={viewBox.cx}
                                                                     y={(viewBox.cy || 0) + 18}
                                                                 >
-                                                                    {formatPercentage(clicksChartData[0].clickrate)}
+                                                                    {formatNumber(clicksChartData[0].clicks)}
                                                                 </tspan>
                                                             </text>
                                                         );
@@ -207,7 +219,7 @@ const NewsletterOverview:React.FC = () => {
                                     <TableHead className='w-full' colSpan={2}>
                                         <div className='flex items-center justify-between gap-6'>
                                             <span>Link</span>
-                                            <span>No. of members clicked</span>
+                                            <span>No. of members</span>
                                         </div>
                                     </TableHead>
                                 </TableRow>
